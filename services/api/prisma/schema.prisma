@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  passwordHash   String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  profile        Profile?
+  deviceSessions DeviceSession[]
+  foods          Food[]         @relation("FoodCreator")
+  recipes        Recipe[]
+  diaryEntries   DiaryEntry[]
+  goals          Goal[]
+  waterLogs      WaterLog[]
+  weightLogs     WeightLog[]
+  fastingWindows FastingWindow[]
+  feedback       Feedback[]
+  subscriptions  Subscription[]
+  referrals      Referral[]     @relation("ReferralOwner")
+  referredBy     Referral?      @relation("ReferralInvitee", fields: [referralId], references: [id])
+  referralId     String?
+  auditLogs      AuditLog[]
+}
+
+model Profile {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id])
+  displayName String?
+  sex        String?
+  dob        DateTime?
+  heightCm   Int?
+  unitSystem String   @default("metric")
+  locale     String   @default("en")
+  timezone   String   @default("Europe/Istanbul")
+}
+
+model AuthProvider {
+  id         String @id @default(cuid())
+  user       User   @relation(fields: [userId], references: [id])
+  userId     String
+  provider   String
+  providerId String
+  @@unique([provider, providerId])
+}
+
+model DeviceSession {
+  id               String   @id @default(cuid())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String
+  refreshTokenHash String
+  ua               String?
+  ip               String?
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+}
+
+model Food {
+  id                 String        @id @default(cuid())
+  source             String
+  sourceId           String?
+  name               String
+  brand              String?
+  isVerified         Boolean       @default(false)
+  defaultServingUnit String
+  defaultServingQty  Float
+  caloriesKcal       Float
+  proteinG           Float
+  carbsG             Float
+  fatG               Float
+  fiberG             Float?
+  sugarG             Float?
+  sodiumMg           Float?
+  microsJson         Json?
+  barcodeEAN         String?       @unique
+  createdBy          User?         @relation("FoodCreator", fields: [createdById], references: [id])
+  createdById        String?
+  createdAt          DateTime      @default(now())
+  altNames           FoodAltName[]
+  barcodes           Barcode[]
+  ingredients        RecipeIngredient[]
+  diaryEntries       DiaryEntry[]
+  @@index([name])
+  @@index([barcodeEAN])
+}
+
+model FoodAltName {
+  id     String @id @default(cuid())
+  food   Food   @relation(fields: [foodId], references: [id])
+  foodId String
+  locale String
+  name   String
+}
+
+model Barcode {
+  id        String  @id @default(cuid())
+  ean       String  @unique
+  food      Food?   @relation(fields: [foodId], references: [id])
+  foodId    String?
+  confidence Float?
+}
+
+model Recipe {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  name      String
+  servings  Float
+  stepsMd   String?
+  isPrivate Boolean  @default(false)
+  ingredients RecipeIngredient[]
+  diaryEntries DiaryEntry[]
+}
+
+model RecipeIngredient {
+  id       String  @id @default(cuid())
+  recipe   Recipe  @relation(fields: [recipeId], references: [id])
+  recipeId String
+  food     Food    @relation(fields: [foodId], references: [id])
+  foodId   String
+  qty      Float
+  unit     String
+}
+
+model DiaryEntry {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  date      DateTime
+  mealType  String
+  itemType  String
+  itemId    String?
+  qty       Float
+  unit      String
+  notes     String?
+  food      Food?    @relation(fields: [foodId], references: [id])
+  foodId    String?
+  recipe    Recipe?  @relation(fields: [recipeId], references: [id])
+  recipeId  String?
+  @@index([userId, date])
+}
+
+model Goal {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  goalType      String
+  targetCalories Int
+  macroRatioJson Json
+  startAt       DateTime
+  endAt         DateTime?
+}
+
+model WaterLog {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  dateTime  DateTime
+  amountMl  Int
+}
+
+model WeightLog {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  dateTime  DateTime
+  weightKg  Float
+}
+
+model FastingWindow {
+  id       String   @id @default(cuid())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   String
+  startAt  DateTime
+  endAt    DateTime?
+  label    String?
+}
+
+model ImportJob {
+  id        String   @id @default(cuid())
+  type      String
+  status    String
+  metaJson  Json?
+  createdAt DateTime @default(now())
+  finishedAt DateTime?
+}
+
+model Feedback {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  type       String
+  payloadJson Json
+  status     String   @default("open")
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String
+  provider          String
+  status            String
+  currentPeriodEnd  DateTime?
+  productId         String?
+  entitlementJson   Json?
+}
+
+model Referral {
+  id             String @id @default(cuid())
+  user           User   @relation("ReferralOwner", fields: [userId], references: [id])
+  userId         String
+  code           String @unique
+  referredUser   User?  @relation("ReferralInvitee")
+  referredUserId String?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metaJson  Json?
+  createdAt DateTime @default(now())
+}
+
+model FeatureFlag {
+  key      String @id
+  valueJson Json
+}

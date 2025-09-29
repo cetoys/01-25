@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "KaloriSayar",
+    "slug": "kalorisayar",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "kalorisayar",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B2C"
+    },
+    "assetBundlePatterns": ["**/*"]
+  }
+}

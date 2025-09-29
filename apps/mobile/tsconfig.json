@@ -1,0 +1,11 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "types": ["expo-router"],
+    "baseUrl": "."
+  },
+  "include": ["app", "*.ts", "*.tsx", "**/*.d.ts"],
+  "exclude": ["node_modules"]
+}
